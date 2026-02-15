@@ -161,22 +161,74 @@ El modelo es fijo, si quiero cambiar, solo modifico la variable, pero el modelo 
 # anova
 
 ```{r}
-
-md <- aov(formula = lfa ~ block + riego + geno + geno*riego, data = fb)
-
-```r
-#| label: anova_md
-broom::tidy(md) %>% 
-  mutate(term = fct_reorder(term, p.value)) %>% 
-  arrange(p.value)
-```r
-#| label: anova_md
-broom::tidy(anova(md)) %>% 
-  mutate(term = fct_reorder(term, p.value)) %>% 
-  arrange(p.value)
-```
+str(fb)
+md <- aov(formula = lfa ~ bloque + riego + geno + geno*riego, data = fb)
 ```
 
+También se puede hacer esta forma:
+
+```{r}
+md <- aov(lfa~bloque+riego+geno+geno*riego,fb)
+```
+
+También se puede hacer de esta otra forma, si eres muy vago :V
+
+```{r}
+md <- aov(lfa ~ bloque + riego*geno, fb)
+
+library(emmeans)
+
+em <- emmeans(md, pairwise ~ riego | geno) %>% 
+cld(., adjust = "tukey", Letters = letters)
+```
+
+
+El R considera el riego*geno y lo desglosa en 2 formas
+
+
+
+
+
+### Prueba de comparación de medias
+
+Pegar a la IA: Utilizando el objeto md, hacer la comparación de medias de riego por genotipo, usando el paquete emmeans e incluir las letras de significancia. Para el nivel de riego, iriigado ponerlo azul y sequia en rojo, Y en el eje y poner de título: Área foliar (cm2).
+
+
+
+#### grafico
+utilizando el objeto em hacer gráfico de barras usando ggplot2 donde en el eje x estén los geno agrupados por riego e incluir la significancia.  Para el nivel de riego, iriigado ponerlo azul y sequia en rojo, Y en el eje y poner de título: Área foliar (cm2).
+
+```{r}
+library(ggplot2)
+library(dplyr)
+
+# assume em is already in the environment
+ggplot(em, aes(x = geno, y = emmean, fill = riego)) +
+  geom_col(position = position_dodge(width = 0.9), width = 0.8) +
+  geom_errorbar(aes(ymin = emmean - SE, ymax = emmean + SE),
+                position = position_dodge(width = 0.9), width = 0.2) +
+  geom_text(aes(label = sig, group = riego),
+            position = position_dodge(width = 0.9),
+            vjust = -0.5, size = 3) +
+  scale_fill_manual(values = c(irrigado = "steelblue", sequia = "tomato")) +
+  labs(x = "Genotipo", y = "Área foliar (cm2)", fill = "Riego") +
+  theme_minimal()
+```
+
+```{r}
+library(ggplot2)
+
+ggplot(em, aes(x = geno, y = emmean, group = riego, color = riego)) +
+  geom_line(size = 1) +
+  geom_point(size = 2) +
+  geom_errorbar(aes(ymin = emmean - SE, ymax = emmean + SE), width = 0.2) +
+  geom_text(aes(label = .group), vjust = -0.5, size = 3) +
+  scale_color_manual(values = c(irrigado = "steelblue", sequia = "tomato")) +
+  labs(x = "Genotipo", y = "Área foliar (cm2)", color = "Riego") +
+  theme_minimal()
+
+
+```
 
 
 
@@ -184,3 +236,8 @@ broom::tidy(anova(md)) %>%
 
 
 
+
+
+
+
+```{r}
